@@ -3,40 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D FPV Tactical Shooter - Joystick Build</title>
+    <title>2D Ghost Reflex Shooter</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
+    <!-- RED FLASH WHEN MISSED OR DAMAGE TAKEN -->
     <div id="damage-flash"></div>
 
+    <!-- MAIN MENU -->
     <div id="menu-screen">
-        <h1>TACTICAL OPEN-WORLD</h1>
-        <p>[ FPV JOYSTICK ENGINE v4.0 ]</p>
-        <button class="btn" onclick="startGame()">Deploy Operator</button>
+        <h1>GHOST HUNTER 2D</h1>
+        <p>[ REFLEX TAP ENGINE v1.0 ]</p>
+        <button class="btn" onclick="startGame()">Start Hunt</button>
     </div>
 
+    <!-- HUD LAYOUT -->
     <div id="game-hud">
-        <div class="hud-row">
-            <div id="scoreTxt" class="hud-card">ELIMINATIONS: 0</div>
-            <div id="hpTxt" class="hud-card">HEALTH: 100%</div>
-        </div>
-        <div id="crosshair"></div>
+        <div id="scoreTxt">ELIMINATIONS: 0</div>
+        <div id="hpTxt">HEALTH: 100%</div>
     </div>
 
-    <div id="controls-layer">
-        <div id="joystick-container">
-            <div id="joystick-knob"></div>
-        </div>
-        <div id="shootBtn">FIRE</div>
-    </div>
-
+    <!-- GAME OVER -->
     <div id="game-over">
-        <h1 class="wasted-text">ELIMINATED IN ACTION</h1>
-        <button class="btn" onclick="restartGame()">Respawn Roster</button>
+        <h1 class="wasted-text">HAUNTED & DEFEATED</h1>
+        <button class="btn" onclick="restartGame()">Try Again</button>
     </div>
 
+    <!-- 2D GRAPHICS RENDERER -->
     <canvas id="gameCanvas"></canvas>
 
     <script src="game.js"></script>
