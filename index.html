@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D FPV Open-World Tactical Shooter</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="damage-flash"></div>
+
+    <div id="menu-screen">
+        <h1>TACTICAL OPEN-WORLD</h1>
+        <p>[ FPV SQUAD ELIMINATION v3.0 ]</p>
+        <button class="btn" onclick="startGame()">Deploy Operator</button>
+    </div>
+
+    <div id="game-hud">
+        <div class="hud-row">
+            <div id="scoreTxt" class="hud-card">ELIMINATIONS: 0</div>
+            <div id="hpTxt" class="hud-card">HEALTH: 100%</div>
+        </div>
+        <div id="crosshair"></div>
+    </div>
+
+    <div id="controls-layer">
+        <div class="pad-container">
+            <div class="dpad">
+                <div></div><div class="dpad-btn" id="moveFwd">▲</div><div></div>
+                <div class="dpad-btn" id="moveLeft">◀</div><div></div><div class="dpad-btn" id="moveRight">▶</div>
+                <div></div><div class="dpad-btn" id="moveBwd">▼</div><div></div>
+            </div>
+            <div id="shootBtn">FIRE</div>
+        </div>
+    </div>
+
+    <div id="game-over">
+        <h1 class="wasted-text">ELIMINATED IN ACTION</h1>
+        <button class="btn" onclick="restartGame()">Respawn Roster</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="game.js"></script>
+</body>
+</html>
