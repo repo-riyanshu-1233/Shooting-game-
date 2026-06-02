@@ -1,10 +1,8 @@
-// 1. SYSTEM SETUP & CONFIGURATION
+// 1. ENGINE ENGINE SETUP & CONFIGURATION
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x01010a, 0.012); // Deep volumetric war climate fog
+scene.fog = new THREE.FogExp2(0x0a0f1d, 0.01); // Atmospheric warzone fog
 
 const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-// Renderer with Shadow Map Enabled
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -14,148 +12,191 @@ const floorY = -10;
 let score = 0, hp = 100, isPlaying = false;
 let enemies = [], lasers = [], obstacles = [];
 
-// Movement & Camera Vectors
 let pitch = 0, yaw = 0;
 let touchStart = { x: 0, y: 0 };
 let isTouchAiming = false;
 let moveState = { forward: false, backward: false, left: false, right: false };
 
 const playerSpeed = 0.45;
-const attackRange = 45; 
+const attackRange = 50; 
 
-// 2. ADVANCED LIGHTING SYSTEM (Three.js Lights & Shadows)
-const ambientLight = new THREE.AmbientLight(0x1a243d, 0.6); // Subtle blue base fill
+// 2. REALISTIC LIGHTING SYSTEM
+const ambientLight = new THREE.AmbientLight(0x2d3748, 0.7); // Warmer ambient fill
 scene.add(ambientLight);
 
-// Directional Tactical Sun for Real Shadows
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-dirLight.position.set(40, 100, 20);
-dirLight.castShadow = true;
-dirLight.shadow.mapSize.width = 1024;
-dirLight.shadow.mapSize.height = 1024;
-dirLight.shadow.camera.near = 0.5;
-dirLight.shadow.camera.far = 300;
-const d = 100;
-dirLight.shadow.camera.left = -d;
-dirLight.shadow.camera.right = d;
-dirLight.shadow.camera.top = d;
-dirLight.shadow.camera.bottom = -d;
-scene.add(dirLight);
+const sunLight = new THREE.DirectionalLight(0xffedd5, 1.0); // Sun light tint
+sunLight.position.set(60, 120, 40);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 2048; // High resolution shadows
+sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.camera.near = 0.5;
+sunLight.shadow.camera.far = 400;
+const d = 150;
+sunLight.shadow.camera.left = -d; sunLight.shadow.camera.right = d;
+sunLight.shadow.camera.top = d; sunLight.shadow.camera.bottom = -d;
+scene.add(sunLight);
 
-// Point Light for Weapon Muzzle Flash Impact
-const flashLight = new THREE.PointLight(0x00ffcc, 0, 30);
+const flashLight = new THREE.PointLight(0x00ffff, 0, 40);
 scene.add(flashLight);
 
-// 3. ENVIRONMENT GENERATION (Procedural Ground & 3D Cover Buildings)
+// 3. PROCEDURAL PROCEDURAL REAL GROUND TEXTURE (Zameen/Mitti Effect)
 const createGroundTexture = () => {
     const c = document.createElement('canvas');
-    c.width = 256; c.height = 256;
+    c.width = 512; c.height = 512;
     const cx = c.getContext('2d');
-    cx.fillStyle = '#0f131c'; cx.fillRect(0,0,256,256);
-    // Grid Lines
-    cx.strokeStyle = '#1f2d42'; cx.lineWidth = 4;
-    cx.strokeRect(0,0,256,256);
-    // Darker inside panel pattern
-    cx.fillStyle = '#121824'; cx.fillRect(10,10,236,236);
+    
+    // Base Mud/Dirt Color
+    cx.fillStyle = '#2d2219'; cx.fillRect(0,0,512,512);
+    
+    // Adding Noise / Rough Soil Patches
+    for (let i = 0; i < 15000; i++) {
+        let x = Math.random() * 512;
+        let y = Math.random() * 512;
+        let size = Math.random() * 3 + 1;
+        cx.fillStyle = Math.random() > 0.5 ? '#1e1610' : '#3a2d22'; // Dark and light soil spots
+        cx.fillRect(x, y, size, size);
+    }
+    
+    // Grass/Moss Blend Marks
+    for (let i = 0; i < 300; i++) {
+        let x = Math.random() * 512;
+        let y = Math.random() * 512;
+        let r = Math.random() * 15 + 5;
+        let grd = cx.createRadialGradient(x, y, 0, x, y, r);
+        grd.addColorStop(0, 'rgba(34, 45, 24, 0.4)'); // Dull tactical green
+        grd.addColorStop(1, 'rgba(0,0,0,0)');
+        cx.fillStyle = grd;
+        cx.beginPath(); cx.arc(x, y, r, 0, Math.PI*2); cx.fill();
+    }
     return new THREE.CanvasTexture(c);
 };
 
 const groundTex = createGroundTexture();
-groundTex.wrapS = THREE.RepeatWrapping; 
-groundTex.wrapT = THREE.RepeatWrapping;
-groundTex.repeat.set(100, 100);
+groundTex.wrapS = THREE.RepeatWrapping; groundTex.wrapT = THREE.RepeatWrapping;
+groundTex.repeat.set(80, 80);
 
-const groundGeo = new THREE.PlaneGeometry(1500, 1500);
-const groundMat = new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.7, metalness: 0.2 });
+const groundGeo = new THREE.PlaneGeometry(2000, 2000);
+const groundMat = new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.9, metalness: 0.1 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI / 2; 
-ground.position.y = floorY;
+ground.rotation.x = -Math.PI / 2; ground.position.y = floorY;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// 3D Buildings Generator for Cover Mechanism
-function createBuilding(x, z, width, height, depth) {
-    const boxGeo = new THREE.BoxGeometry(width, height, depth);
-    const boxMat = new THREE.MeshStandardMaterial({ 
-        color: 0x1b2234, 
-        roughness: 0.5,
-        metalness: 0.5,
-        wireframe: false 
-    });
-    const building = new THREE.Mesh(boxGeo, boxMat);
-    building.position.set(x, floorY + height / 2, z);
-    building.castShadow = true;
-    building.receiveShadow = true;
+// 4. DIFFERENT TYPES OF COVERS GENERATOR
+function createCustomCover(type, x, z) {
+    let geo, mat, height;
     
-    // Custom Hitbox Radius bounding check
-    building.userData = { radius: Math.max(width, depth) / 1.4 };
+    if (type === 'MILITARY_CRATE') {
+        // Type 1: Wooden/Iron Tactical Box Container
+        height = 8;
+        geo = new THREE.BoxGeometry(8, height, 8);
+        mat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.7, metalness: 0.4 }); // Brown Cargo color
+    } 
+    else if (type === 'CONCRETE_WALL') {
+        // Type 2: Wide Defense Wall
+        height = 10;
+        geo = new THREE.BoxGeometry(22, height, 4);
+        mat = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.8, metalness: 0.2 }); // Dusty Concrete Gray
+    } 
+    else if (type === 'CYBER_TOWER') {
+        // Type 3: High Hexagonal Tech Tower
+        height = 35;
+        geo = new THREE.CylinderGeometry(4, 6, height, 6);
+        mat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.3, metalness: 0.8 }); // Dark Metallic Steel
+    }
+
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, floorY + height / 2, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     
-    scene.add(building);
-    obstacles.push(building);
+    // Custom logic detail strip lines on covers for design
+    if(type === 'MILITARY_CRATE' || type === 'CONCRETE_WALL') {
+        const lineGeo = new THREE.BoxGeometry(geo.parameters.width + 0.2, 0.5, geo.parameters.depth + 0.2);
+        const lineMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+        const strip = new THREE.Mesh(lineGeo, lineMat);
+        strip.position.y = 0;
+        mesh.add(strip);
+    }
+
+    mesh.userData = { radius: Math.max(geo.parameters.width || geo.parameters.radiusTop * 2, geo.parameters.depth || 1) / 1.3 };
+    scene.add(mesh);
+    obstacles.push(mesh);
 }
 
-// 4. CYBORG SOLDIER GENERATION UNIT
-function spawnStaticSoldier(fixedZ, fixedX) {
+// 5. CYBORG SOLDIER GENERATOR WITH DETAILED ENEMY FACES
+function spawnDetailedSoldier(fixedZ, fixedX) {
     const group = new THREE.Group();
 
-    // Heavy Torso Armor Mesh
-    const bodyGeo = new THREE.CylinderGeometry(1.0, 0.8, 2.8, 8);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff3838, metalness: 0.6, roughness: 0.2 });
+    // Body Armor
+    const bodyGeo = new THREE.CylinderGeometry(1.0, 0.7, 2.8, 8);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xde2c2c, metalness: 0.5, roughness: 0.3 });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 1.4; 
-    body.castShadow = true;
-    group.add(body);
+    body.position.y = 1.4; body.castShadow = true; group.add(body);
 
-    // AI Core Sphere Head
-    const headGeo = new THREE.SphereGeometry(0.6, 12, 12);
-    const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xff4444 });
+    // Head Base
+    const headGeo = new THREE.SphereGeometry(0.6, 16, 16);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.5 });
     const head = new THREE.Mesh(headGeo, headMat);
-    head.position.y = 3.1; 
-    head.castShadow = true;
+    head.position.y = 3.1; head.castShadow = true;
+
+    // --- CYBORG FACE DETAILS (Eyes and Visor Mask) ---
+    const visorGeo = new THREE.BoxGeometry(0.7, 0.2, 0.4);
+    const visorMat = new THREE.MeshBasicMaterial({ color: 0x00ffff }); // Glowing Cyan Visor Eye Mask
+    const visor = new THREE.Mesh(visorGeo, visorMat);
+    visor.position.set(0, 0.1, -0.45); // Set on front face of head sphere
+    head.add(visor);
+
+    const jawGeo = new THREE.BoxGeometry(0.5, 0.3, 0.4);
+    const jawMat = new THREE.MeshStandardMaterial({ color: 0x374151, metalness: 0.7 }); // Heavy armored lower jaw
+    const jaw = new THREE.Mesh(jawGeo, jawMat);
+    jaw.position.set(0, -0.25, -0.4);
+    head.add(jaw);
+
     group.add(head);
 
-    // Dynamic Gun Barrel Rail
-    const armGeo = new THREE.BoxGeometry(0.35, 0.35, 1.6);
-    const armMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, metalness: 0.8 });
-    const arm = new THREE.Mesh(armGeo, armMat);
-    arm.position.set(0.9, 1.8, -0.6); 
-    arm.castShadow = true;
-    group.add(arm);
+    // Heavy Weapon Arm Rifle
+    const gunGeo = new THREE.BoxGeometry(0.4, 0.4, 1.8);
+    const gunMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.9 });
+    const gun = new THREE.Mesh(gunGeo, gunMat);
+    gun.position.set(0.9, 1.7, -0.7); gun.castShadow = true; group.add(gun);
 
     group.position.set(fixedX, floorY, fixedZ);
-    group.userData = { isAlerted: false, baseX: fixedX, baseZ: fixedZ, radius: 1.5 };
+    group.userData = { isAlerted: false, baseX: fixedX, baseZ: fixedZ, radius: 1.6 };
 
     scene.add(group);
     enemies.push(group);
 }
 
-// Deploy Match Initiator
+// Deploy Match Game Init
 function startGame() {
     document.getElementById('menu-screen').style.display = 'none';
     document.getElementById('game-hud').style.display = 'block';
     document.getElementById('controls-layer').style.display = 'block';
     
-    camera.position.set(0, -5.5, 50); 
+    camera.position.set(0, -5.5, 60); 
     isPlaying = true;
     
-    // Spawning Tactical Pillars & Cover Units
-    createBuilding(0, 10, 15, 30, 15);     // Center Large Core Building
-    createBuilding(-25, -30, 12, 25, 12);  // Left Block
-    createBuilding(30, -50, 10, 20, 25);   // Right Warehouse Cover
-    createBuilding(-40, 15, 14, 35, 14);   // Outer Left Tower
-    createBuilding(20, 35, 8, 18, 8);      // Small Right Pillar
+    // Placing Different Types of Covers across the map ground
+    createCustomCover('CYBER_TOWER', 0, -20);      // Center Tower
+    createCustomCover('CONCRETE_WALL', -30, 0);     // Left Wall
+    createCustomCover('CONCRETE_WALL', 30, -50);    // Right Wall far away
+    createCustomCover('MILITARY_CRATE', -15, -40);  // Small Crate boxes left
+    createCustomCover('MILITARY_CRATE', 20, 10);    // Crate box close right
+    createCustomCover('CYBER_TOWER', -45, -80);     // Far Left Tower
+    createCustomCover('MILITARY_CRATE', -35, -10);  // Additional Cover box
 
-    // Spawning Enemy Grid Points
-    spawnStaticSoldier(-25, -10);
-    spawnStaticSoldier(-65, -45);
-    spawnStaticSoldier(-110, 30);
-    spawnStaticSoldier(15, -85);
-    spawnStaticSoldier(-140, -15);
+    // Spawn Guards around the cover layout grid locations
+    spawnDetailedSoldier(-35, 5);
+    spawnDetailedSoldier(-75, -35);
+    spawnDetailedSoldier(-120, 25);
+    spawnDetailedSoldier(0, -45);
+    spawnDetailedSoldier(-150, -10);
     
     animate();
 }
 
-// 5. TOUCH CONTROLS INPUT MANAGEMENT
+// 6. TOUCH LOOK LOOK DRAG OVERLAY MECHANICS
 window.addEventListener('touchstart', (e) => {
     if (!isPlaying) return;
     if (e.target.id === 'shootBtn' || e.target.classList.contains('dpad-btn')) {
@@ -181,9 +222,9 @@ window.addEventListener('touchmove', (e) => {
     let deltaX = touch.clientX - touchStart.x;
     let deltaY = touch.clientY - touchStart.y;
 
-    yaw -= deltaX * 0.0038;
-    pitch -= deltaY * 0.0038;
-    pitch = Math.max(-Math.PI/3.2, Math.min(Math.PI/3.2, pitch)); // Vertical looking limit
+    yaw -= deltaX * 0.0035;
+    pitch -= deltaY * 0.0035;
+    pitch = Math.max(-Math.PI/3.2, Math.min(Math.PI/3.2, pitch));
 
     camera.rotation.set(0, 0, 0);
     camera.rotation.y = yaw;
@@ -195,7 +236,7 @@ window.addEventListener('touchmove', (e) => {
 
 window.addEventListener('touchend', () => { isTouchAiming = false; });
 
-// D-Pad Movement Binds
+// D-Pad Movement Setup Hooks Binds
 const bindMovement = (id, directionProperty) => {
     const el = document.getElementById(id);
     el.addEventListener('touchstart', (e) => { e.preventDefault(); moveState[directionProperty] = true; });
@@ -206,9 +247,9 @@ bindMovement('moveBwd', 'backward');
 bindMovement('moveLeft', 'left');
 bindMovement('moveRight', 'right');
 
-// Weapon Shooting Logic with Dynamic Light Flash
+// Laser Weapon Projectile System Dispatcher
 function fireWeaponTracer() {
-    const laserGeo = new THREE.CylinderGeometry(0.05, 0.05, 4.0);
+    const laserGeo = new THREE.CylinderGeometry(0.06, 0.06, 4.5);
     const laserMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
     const laser = new THREE.Mesh(laserGeo, laserMat);
     
@@ -218,26 +259,24 @@ function fireWeaponTracer() {
     laser.rotation.x += Math.PI / 2;
     
     const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-    laser.velocity = dir.multiplyScalar(3.8);
+    laser.velocity = dir.multiplyScalar(4.0);
 
     scene.add(laser);
     lasers.push(laser);
 
-    // Trigger Pointlight flash at barrel position
     flashLight.position.copy(camera.position);
-    flashLight.intensity = 3.5;
-    setTimeout(() => { flashLight.intensity = 0; }, 60);
+    flashLight.intensity = 4.0;
+    setTimeout(() => { flashLight.intensity = 0; }, 50);
 }
 
-// 6. MAIN ENGINE CORE MATHEMATICAL LOOP
+// 7. GAME ENGINE MAIN MAIN CALCULATOR RENDERING LOOP
 function animate() {
     if (!isPlaying) return;
     requestAnimationFrame(animate);
 
-    // Save previous position coordinates for physical wall collision fallback
     const oldPos = camera.position.clone();
 
-    // Calculate Movement Translations
+    // Movement Calculations
     const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
     forwardVector.y = 0; forwardVector.normalize(); 
     const rightVector = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
@@ -248,22 +287,21 @@ function animate() {
     if (moveState.left) camera.position.addScaledVector(rightVector, -playerSpeed);
     if (moveState.right) camera.position.addScaledVector(rightVector, playerSpeed);
 
-    // Solid Wall Collision Engine Detection for Player
+    // Wall Covers Collision Tracker for Player
     obstacles.forEach((obs) => {
         let distToWall = camera.position.distanceTo(new THREE.Vector3(obs.position.x, camera.position.y, obs.position.z));
-        if (distToWall < obs.userData.radius + 1.5) {
-            camera.position.copy(oldPos); // Bounce/Restrict back
+        if (distToWall < obs.userData.radius + 1.6) {
+            camera.position.copy(oldPos); // Reset / Collision push back block
         }
     });
 
-    // Bullets System Frame Update & Raycast Hitbox Collision Checking
+    // Laser Processing & Hit Down Core
     for(let l = lasers.length - 1; l >= 0; l--) {
         let laser = lasers[l];
         laser.position.add(laser.velocity);
 
         let laserDestroyed = false;
 
-        // Check if Bullet hits 3D Cover Buildings
         for(let o=0; o<obstacles.length; o++) {
             if (laser.position.distanceTo(new THREE.Vector3(obstacles[o].position.x, laser.position.y, obstacles[o].position.z)) < obstacles[o].userData.radius) {
                 scene.remove(laser);
@@ -274,7 +312,6 @@ function animate() {
         }
         if (laserDestroyed) continue;
 
-        // Check if Bullet hits Enemy Units
         for(let e = enemies.length - 1; e >= 0; e--) {
             let enemy = enemies[e];
             let dist = laser.position.distanceTo(new THREE.Vector3(enemy.position.x, enemy.position.y + 1.5, enemy.position.z));
@@ -287,18 +324,18 @@ function animate() {
 
                 score++;
                 document.getElementById('scoreTxt').innerText = "ELIMINATIONS: " + score;
-                spawnStaticSoldier(camera.position.z - (Math.random() * 80 + 50), camera.position.x + (Math.random() - 0.5) * 70);
+                spawnDetailedSoldier(camera.position.z - (Math.random() * 90 + 50), camera.position.x + (Math.random() - 0.5) * 80);
                 break;
             }
         }
 
-        if(laser && camera.position.distanceTo(laser.position) > 160) {
+        if(laser && camera.position.distanceTo(laser.position) > 170) {
             scene.remove(laser);
             lasers.splice(l, 1);
         }
     }
 
-    // AI Movement Path Processing with Wall Obstacle Awareness
+    // AI Guard Mechanics Engine Loop
     let takingDamage = false;
 
     enemies.forEach((enemy) => {
@@ -307,24 +344,23 @@ function animate() {
         if (currentDistance <= attackRange) {
             enemy.userData.isAlerted = true;
             
-            // Save old coordinate before tracking processing step
             let prevEnemyPos = enemy.position.clone();
 
             enemy.position.z += (camera.position.z > enemy.position.z) ? 0.24 : -0.24;
             enemy.position.x += (camera.position.x > enemy.position.x) ? 0.24 : -0.24;
             
-            // AI Building Collision Bypass Prevention Rule
+            // AI Cover Bypass Check
             obstacles.forEach((obs) => {
                 let dToObs = enemy.position.distanceTo(new THREE.Vector3(obs.position.x, enemy.position.y, obs.position.z));
                 if (dToObs < obs.userData.radius + enemy.userData.radius) {
-                    enemy.position.copy(prevEnemyPos); // Slide laterally around building corners
-                    enemy.position.x += (camera.position.x > enemy.position.x) ? 0.2 : -0.2; 
+                    enemy.position.copy(prevEnemyPos);
+                    enemy.position.x += (camera.position.x > enemy.position.x) ? 0.22 : -0.22; 
                 }
             });
 
+            // Enemy locks rotation facing player
             enemy.lookAt(camera.position.x, enemy.position.y, camera.position.z);
 
-            // Close Combat Range Damage System Execution Trigger
             if (currentDistance < 6.5) {
                 takingDamage = true;
                 hp -= 0.5;
@@ -336,7 +372,6 @@ function animate() {
                 }
             }
         } else {
-            // Cool-down return tracker logic loop branch execution
             if (enemy.userData.isAlerted) {
                 let distToBase = enemy.position.distanceTo(new THREE.Vector3(enemy.userData.baseX, floorY, enemy.userData.baseZ));
                 if (distToBase > 1.5) {
@@ -350,14 +385,12 @@ function animate() {
         }
     });
 
-    // Dynamic Blood Screen Flash rendering system call
     const flashScreen = document.getElementById('damage-flash');
     flashScreen.style.border = takingDamage ? "12px solid rgba(255, 71, 87, 0.65)" : "0px solid rgba(255, 71, 87, 0)";
 
     renderer.render(scene, camera);
 }
 
-// System State Overhaul Reset Config Map Call
 function restartGame() {
     document.getElementById('game-over').style.display = 'none';
     hp = 100; score = 0;
