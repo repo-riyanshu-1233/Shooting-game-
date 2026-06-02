@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D FPV Open-World Tactical Shooter</title>
+    <title>3D FPV Tactical Shooter - Joystick Build</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -13,7 +13,7 @@
 
     <div id="menu-screen">
         <h1>TACTICAL OPEN-WORLD</h1>
-        <p>[ FPV SQUAD ELIMINATION v3.0 ]</p>
+        <p>[ FPV JOYSTICK ENGINE v4.0 ]</p>
         <button class="btn" onclick="startGame()">Deploy Operator</button>
     </div>
 
@@ -26,14 +26,10 @@
     </div>
 
     <div id="controls-layer">
-        <div class="pad-container">
-            <div class="dpad">
-                <div></div><div class="dpad-btn" id="moveFwd">▲</div><div></div>
-                <div class="dpad-btn" id="moveLeft">◀</div><div></div><div class="dpad-btn" id="moveRight">▶</div>
-                <div></div><div class="dpad-btn" id="moveBwd">▼</div><div></div>
-            </div>
-            <div id="shootBtn">FIRE</div>
+        <div id="joystick-container">
+            <div id="joystick-knob"></div>
         </div>
+        <div id="shootBtn">FIRE</div>
     </div>
 
     <div id="game-over">
