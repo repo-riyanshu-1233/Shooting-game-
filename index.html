@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D FPV Tactical Warzone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>3D FPV Tactical Warzone - Scope Build</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -11,7 +11,6 @@
 
     <div id="damage-flash"></div>
 
-    <!-- 1. USER PROFILE LOGIN LAYOUT -->
     <div id="login-screen" class="overlay-menu">
         <div class="terminal-card">
             <h2>OPERATOR REGISTRATION</h2>
@@ -21,15 +20,13 @@
         </div>
     </div>
 
-    <!-- 2. MAIN MENU SCREEN -->
     <div id="menu-screen" class="overlay-menu" style="display: none;">
         <h1 id="welcomeUser">WELCOME, OPERATOR</h1>
         <h3 id="profileLevel">CURRENT RANK: LEVEL 1</h3>
-        <p style="color: #666; margin-bottom: 25px;">[ ENGINE FRAMEWORK V5.2 - READY ]</p>
+        <p style="color: #666; margin-bottom: 25px;">[ ALPHA ENGINE v6.0 - FULLSCREEN ]</p>
         <button class="btn production-btn" onclick="startGame()">Launch Operation</button>
     </div>
 
-    <!-- 3. IN-GAME SHOP DASHBOARD (PAUSE STATE) -->
     <div id="shop-screen" class="overlay-menu" style="display: none;">
         <div class="shop-box">
             <h2>ARMORY ARSENAL STORE</h2>
@@ -57,7 +54,6 @@
         </div>
     </div>
 
-    <!-- 4. MAIN HEADS UP DISPLAY (HUD) -->
     <div id="game-hud">
         <div class="hud-top-bar">
             <div id="hudName">OP: RIYANSHU</div>
@@ -75,7 +71,6 @@
         <div id="crosshair"></div>
     </div>
 
-    <!-- 5. TACTICAL GAME ACTIONS & MOBILITY CONTROLS -->
     <div id="controls-layer">
         <div id="joystick-container">
             <div id="joystick-knob"></div>
@@ -84,11 +79,11 @@
         <div class="action-buttons-rack">
             <div id="pauseBtn" onclick="togglePauseShop(true)">PAUSE / SHOP</div>
             <div id="reloadBtn" onclick="manualReloadRequest()">RELOAD</div>
+            <div id="scopeBtn">SCOPE</div>
             <div id="shootBtn">FIRE</div>
         </div>
     </div>
 
-    <!-- 6. LEVEL COMPLETE / GAME OVER NOTIFICATIONS -->
     <div id="game-over" class="overlay-menu" style="display: none;">
         <h1 id="gameOverTitle" class="wasted-text">MISSION FAILED</h1>
         <p id="gameOverDesc" style="color: #aaa; margin-bottom: 20px;"></p>
@@ -97,6 +92,6 @@
 
     <canvas id="gameCanvas"></canvas>
 
-    <script src="game.js"></script>
 </body>
+<script src="game.js"></script>
 </html>
